@@ -23,5 +23,10 @@ Processor::Chip8::initialize()
     this->memory[i + C8_MEMORY_OFFSET] = (uint8_t)byte;
     i++;
   }
-  std::cout << hexdump(this->memory);
+}
+
+void
+Processor::Chip8::dumpMemory()
+{
+  std::cout << hexdump(this->memory) << std::endl;
 }

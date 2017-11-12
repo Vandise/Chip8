@@ -23,6 +23,7 @@ namespace Processor
     public:
       Chip8(const char *file_path);
       void initialize();
+      void dumpMemory();
 
 	};
 }

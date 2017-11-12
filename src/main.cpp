@@ -13,6 +13,7 @@ main( const int argc, const char **argv )
 
   Processor::Chip8 C8(argv[1]);
   C8.initialize();
+  C8.dumpMemory();
 
   return 0;
 }
