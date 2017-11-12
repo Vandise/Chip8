@@ -46,6 +46,7 @@ Display::Screen::inputManager()
 void
 Display::Screen::refresh()
 {
+
   // Update SDL texture
   SDL_UpdateTexture(this->sdlTexture, NULL, this->pixelBuffer, 64 * sizeof(Uint32));
 

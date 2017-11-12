@@ -2,6 +2,7 @@
 #define __DISPLAY_SCREEN 1
 
 #include "SDL2/SDL.h"
+#include <iostream>
 
 #define WINDOW_HEIGHT 512
 #define WINDOW_WIDTH 1024

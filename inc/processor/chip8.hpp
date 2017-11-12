@@ -10,8 +10,6 @@
 #include <cstdint>
 #include <string>
 #include <fstream>
-#include <chrono>
-#include <thread>
 #include "debug/hexdump.hpp"
 
 #define C8_MEMORY_OFFSET     512
@@ -36,14 +34,19 @@ namespace Processor
       uint16_t programCounter;
       uint16_t opCode;
 
+      uint8_t delayTimer;                // Delay timer
+      uint8_t soundTimer;                // Sound timer
+
       std::string filename;
       std::ifstream file;
       std::map<uint16_t, instructionHandle> instructions;
+      std::map<uint16_t, instructionHandle> fxInstructions;   // there's a lot of 0xFxNN instructions
 
     public:
 
-      bool    drawFlag;          // tell the view to redraw the screen
+      bool    drawFlag; // tell the view to redraw the screen
       uint8_t graphicsBuffer[C8_GFX_LENGTH * C8_GFX_WIDTH];
+      uint8_t  key[16]; // Keypad
 
       Chip8(const char *file_path);
       void initialize();
@@ -51,10 +54,20 @@ namespace Processor
       void cycle();
 
     protected:
+      void return_clear_screen();
+      void fx_entrance();
+      void fx_ld_b_vx();
+      void fx_ld_vx_i();
+      void fx_ld_f_vx();
+      void fx_ld_dt_vx();
+      void fx_ld_vx_dt();
       void ld_vx_byte();
       void ld_i_addr();
       void drw_vx_vy_nibble();
       void call_addr();
+      void add_vx_byte();
+      void se_vx_byte();
+      void jp_addr();
 
 	};
 }
