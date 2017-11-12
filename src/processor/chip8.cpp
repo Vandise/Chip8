@@ -73,7 +73,7 @@ Processor::Chip8::cycle()
   else
   {
     std::cout << "Unimplemented OpCode: " << hexdump(this->opCode) << std::endl;
-    exit(1);
+    //exit(1);
   }
 
 }

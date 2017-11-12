@@ -39,7 +39,7 @@ directories:
 	mkdir -p $(INCDIR)
 
 lexer:
-	$(CC) $(CXXSTD) $(INC) $(LEXERFILES) -o $(TARGETDIR)/$(TARGET)
+	$(CC) $(CXXSTD) $(INC) $(LEXERFILES) -o $(TARGETDIR)/$(TARGET) `sdl2-config --cflags --libs`
 
 tests:
 	$(CC) $(CXXSTD) $(INC) $(TESTFILES) -o $(TARGETDIR)/$(TESTTARGET)

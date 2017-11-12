@@ -29,7 +29,6 @@ namespace Processor
       uint16_t indexRegister;
       uint16_t programCounter;
       uint16_t opCode;
-      bool     drawFlag;          // tell the view to redraw the screen
 
       std::string filename;
       std::ifstream file;
@@ -37,6 +36,7 @@ namespace Processor
 
     public:
 
+      bool    drawFlag;          // tell the view to redraw the screen
       uint8_t graphicsBuffer[C8_GFX_LENGTH * C8_GFX_WIDTH];
 
       Chip8(const char *file_path);
