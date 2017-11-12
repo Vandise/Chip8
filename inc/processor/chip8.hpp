@@ -1,6 +1,7 @@
 #ifndef __Processor
 #define __Processor 1
 
+#include <map>
 #include <iostream>
 #include <cstdint>
 #include <string>
@@ -15,6 +16,8 @@ namespace Processor
 	class Chip8
 	{
 
+    typedef void(Chip8::*instructionHandle)();
+
     private:
       uint8_t  memory[4096];
       uint16_t programCounter;
@@ -22,12 +25,16 @@ namespace Processor
 
       std::string filename;
       std::ifstream file;
+      std::map<uint16_t, instructionHandle> instructions;
 
     public:
       Chip8(const char *file_path);
       void initialize();
       void dumpMemory();
       void cycle();
+
+    protected:
+      void ld_vx_byte();
 
 	};
 }
