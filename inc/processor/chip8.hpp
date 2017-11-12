@@ -28,6 +28,8 @@ namespace Processor
     typedef void(Chip8::*instructionHandle)();
 
     private:
+      uint16_t stack[16];         // Stack
+      uint16_t sp;                // Stack pointer
       uint8_t  memory[4096];      // 4k of memory
       uint8_t  registers[16];     // 16 registers: 0 - F
       uint16_t indexRegister;
@@ -52,6 +54,7 @@ namespace Processor
       void ld_vx_byte();
       void ld_i_addr();
       void drw_vx_vy_nibble();
+      void call_addr();
 
 	};
 }

@@ -8,6 +8,7 @@ Processor::Chip8::Chip8(const char *file_path)
 
   // our program is loaded at "address" 0x200
   this->programCounter = C8_MEMORY_OFFSET_HEX;
+  this->sp = 0;
 
   for (int i = 0; i < 4096; ++i)
   {
@@ -20,6 +21,7 @@ Processor::Chip8::Chip8(const char *file_path)
 
   for (int i = 0; i < 16; ++i) {
     this->registers[i] = 0;
+    this->stack[i] = 0;
   }
 
   for (int i = 0; i < 80; ++i) {
@@ -42,6 +44,7 @@ Processor::Chip8::initialize()
   }
 
   // Instruction Handlers
+  this->instructions[0x2000] = &Chip8::call_addr;
   this->instructions[0x6000] = &Chip8::ld_vx_byte;
   this->instructions[0xA000] = &Chip8::ld_i_addr;
   this->instructions[0xD000] = &Chip8::drw_vx_vy_nibble;
@@ -172,7 +175,20 @@ Processor::Chip8::drw_vx_vy_nibble()
   this->programCounter += 2;
 }
 
+/*
+  2nnn - CALL addr
+    Call subroutine at nnn.
+    The interpreter increments the stack pointer, then puts the current PC on the top of the stack. The PC is then set to nnn.
+*/
+void
+Processor::Chip8::call_addr()
+{
+  std::cout << "call_addr: " << hexdump(this->opCode) << std::endl;
 
+  this->stack[this->sp] = this->programCounter;
+  ++this->sp;
+  this->programCounter = this->opCode & 0x0FFF;
+}
 
 
 
