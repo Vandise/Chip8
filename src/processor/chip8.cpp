@@ -4,7 +4,7 @@
 Processor::Chip8::Chip8(const char *file_path)
 {
   this->filename = file_path;
-  this->drawFlag = false;
+  //this->drawFlag = false;
 
   // our program is loaded at "address" 0x200
   this->programCounter = C8_MEMORY_OFFSET_HEX;
@@ -24,10 +24,7 @@ Processor::Chip8::Chip8(const char *file_path)
   for (int i = 0; i < 16; ++i) {
     this->registers[i] = 0;
     this->stack[i] = 0;
-  }
-
-  for (int i = 0; i < 80; ++i) {
-    this->memory[i] = chip8_fontset[i];
+    this->key[i] = 0;
   }
 
   srand (time(NULL));
@@ -43,6 +40,11 @@ Processor::Chip8::initialize()
   {
     this->memory[i + C8_MEMORY_OFFSET] = (uint8_t)byte;
     i++;
+  }
+
+  for (int i = 0; i < 80; ++i)
+  {
+    this->memory[i] = chip8_fontset[i];
   }
 
   // Instruction Handlers
@@ -62,9 +64,10 @@ Processor::Chip8::initialize()
     // 0xF instructions
     this->fxInstructions[0x0007] = &Chip8::fx_ld_vx_dt;
     this->fxInstructions[0x0015] = &Chip8::fx_ld_dt_vx;
-    this->fxInstructions[0x0029] = &Chip8::fx_ld_vx_i;
+    this->fxInstructions[0x0018] = &Chip8::fx_ld_st_vx;
+    this->fxInstructions[0x0029] = &Chip8::fx_ld_f_vx;
     this->fxInstructions[0x0033] = &Chip8::fx_ld_b_vx;
-    this->fxInstructions[0x0065] = &Chip8::fx_ld_f_vx;
+    this->fxInstructions[0x0065] = &Chip8::fx_ld_vx_i;;
 }
 
 void
@@ -104,6 +107,7 @@ Processor::Chip8::cycle()
   else
   {
     std::cout << "Unimplemented OpCode: " << hexdump(this->opCode) << std::endl;
+    exit(1);
   }
 
   if (this->delayTimer > 0)
@@ -346,6 +350,21 @@ Processor::Chip8::fx_ld_dt_vx()
   std::cout << "fx_ld_dt_vx: " << hexdump(this->opCode) << std::endl;
 
   this->delayTimer = this->registers[(this->opCode & 0x0F00) >> 8];
+  this->programCounter += 2;
+}
+
+/*
+
+  Fx18 - LD ST, Vx
+    Set sound timer = Vx.
+  
+    ST is set equal to the value of Vx.
+
+*/
+void
+Processor::Chip8::fx_ld_st_vx()
+{
+  this->soundTimer = this->registers[MASK(0x0F00) >> 8];
   this->programCounter += 2;
 }
 

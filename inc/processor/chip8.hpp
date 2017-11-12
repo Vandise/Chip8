@@ -65,6 +65,7 @@ namespace Processor
       void fx_ld_f_vx();
       void fx_ld_dt_vx();
       void fx_ld_vx_dt();
+      void fx_ld_st_vx();
       void ld_vx_byte();
       void ld_i_addr();
       void drw_vx_vy_nibble();

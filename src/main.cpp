@@ -16,7 +16,9 @@ main( const int argc, const char **argv )
 
   Display::Screen *window = new Display::Screen();
   Processor::Chip8 *C8 = new Processor::Chip8(argv[1]);
+
   C8->initialize();
+  //C8->dumpMemory();
 
   while (true)
   {
@@ -38,7 +40,7 @@ main( const int argc, const char **argv )
       }
       window->refresh();
     }
-    std::this_thread::sleep_for(std::chrono::microseconds(2400));
+    std::this_thread::sleep_for(std::chrono::microseconds(800));
 
   }
   delete(C8);
