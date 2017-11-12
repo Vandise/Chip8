@@ -120,6 +120,7 @@ Processor::Chip8::cycle()
     if (this->soundTimer == 1)
     {
       // BEEP!
+      std::cout << '\a';
     }
     --this->soundTimer;
   }
