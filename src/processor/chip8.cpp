@@ -1,7 +1,5 @@
 #include "processor/chip8.hpp"
-
-#include <stdio.h>
-#include <stdlib.h>
+#include "processor/fontset.hpp"
 
 Processor::Chip8::Chip8(const char *file_path)
 {
@@ -15,6 +13,20 @@ Processor::Chip8::Chip8(const char *file_path)
   {
     memory[i] = 0;
   }
+
+  for (int i = 0; i < 2048; ++i) {
+    this->graphicsBuffer[i] = 0;
+  }
+
+  for (int i = 0; i < 16; ++i) {
+    this->registers[i] = 0;
+  }
+
+  for (int i = 0; i < 80; ++i) {
+    this->memory[i] = chip8_fontset[i];
+  }
+
+  srand (time(NULL));
 }
 
 void
@@ -73,7 +85,6 @@ Processor::Chip8::cycle()
   else
   {
     std::cout << "Unimplemented OpCode: " << hexdump(this->opCode) << std::endl;
-    //exit(1);
   }
 
 }

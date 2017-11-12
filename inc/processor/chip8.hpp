@@ -1,6 +1,10 @@
 #ifndef __Processor
 #define __Processor 1
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <random>
+#include "time.h"
 #include <map>
 #include <iostream>
 #include <cstdint>
