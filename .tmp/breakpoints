@@ -1,0 +1,3 @@
+breakpoint set -f /Users/banderson/local/the-compiler-anthology/cpp-project/src/main.cpp -l 6
+file bin/hello_word
+file bin/hello_word
