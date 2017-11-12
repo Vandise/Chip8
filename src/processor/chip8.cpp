@@ -14,7 +14,7 @@ Processor::Chip8::Chip8(const char *file_path)
 
   for (int i = 0; i < 4096; ++i)
   {
-    memory[i] = 0;
+    this->memory[i] = 0;
   }
 
   for (int i = 0; i < 2048; ++i) {
@@ -50,10 +50,14 @@ Processor::Chip8::initialize()
   this->instructions[0x1000] = &Chip8::jp_addr;
   this->instructions[0x2000] = &Chip8::call_addr;
   this->instructions[0x3000] = &Chip8::se_vx_byte;
+  this->instructions[0x4000] = &Chip8::sne_vx_byte;
   this->instructions[0x6000] = &Chip8::ld_vx_byte;
   this->instructions[0x7000] = &Chip8::add_vx_byte;
+  this->instructions[0x8000] = &Chip8::register_vx_vy_byte;
   this->instructions[0xA000] = &Chip8::ld_i_addr;
+  this->instructions[0xC000] = &Chip8::rnd_vx_byte;
   this->instructions[0xD000] = &Chip8::drw_vx_vy_nibble;
+  this->instructions[0xE000] = &Chip8::ex_skip;
   this->instructions[0xF000] = &Chip8::fx_entrance;
     // 0xF instructions
     this->fxInstructions[0x0007] = &Chip8::fx_ld_vx_dt;
@@ -157,7 +161,7 @@ Processor::Chip8::ld_vx_byte()
 {
   std::cout << "ld_vx_byte: " << hexdump(this->opCode) << std::endl;
 
-  this->registers[(this->opCode & 0x0F00)] = (this->opCode & 0x00FF);
+  this->registers[(this->opCode & 0x0F00) >> 8] = (this->opCode & 0x00FF);
   this->programCounter += 2;
 }
 
@@ -269,6 +273,26 @@ void
 Processor::Chip8::se_vx_byte()
 {
   if ( this->registers[(this->opCode & 0x0F00) >> 8] == (this->opCode & 0x00FF) )
+  {
+    this->programCounter += 4;
+  }
+  else
+  {
+    this->programCounter += 2;
+  }
+}
+
+/*
+  4xkk - SNE Vx, byte
+    Skip next instruction if Vx != kk.
+  
+    The interpreter compares register Vx to kk, and if they are not equal,
+    increments the program counter by 2.
+*/
+void
+Processor::Chip8::sne_vx_byte()
+{
+  if ( this->registers[(this->opCode & 0x0F00) >> 8] != (this->opCode & 0x00FF) )
   {
     this->programCounter += 4;
   }
@@ -391,5 +415,211 @@ Processor::Chip8::add_vx_byte()
   this->registers[(this->opCode & 0x0F00) >> 8] += (this->opCode & 0x00FF);
   this->programCounter += 2;
 }
+
+/*
+  Cxkk - RND Vx, byte
+    Set Vx = random byte AND kk.
+
+    The interpreter generates a random number from 0 to 255, which is then ANDed with the value kk. T
+    he results are stored in Vx.
+*/
+void
+Processor::Chip8::rnd_vx_byte()
+{
+  std::cout << "rnd_vx_byte: " << hexdump(this->opCode) << std::endl;
+
+  this->registers[(this->opCode & 0x0F00 ) >> 8] = (rand() % (0xFF + 1)) & (this->opCode & 0x00FF);
+  this->programCounter += 2;
+}
+
+/*
+  Ex9E - SKP Vx
+    Skip next instruction if key with the value of Vx is pressed.
+
+    Checks the keyboard, and if the key corresponding to the value of Vx is currently in the down position, 
+    PC is increased by 2.
+
+
+    ExA1 - SKNP Vx
+      Skip next instruction if key with the value of Vx is not pressed.
+
+      Checks the keyboard, and if the key corresponding to the value of Vx is currently in the up position, 
+      PC is increased by 2.
+*/
+void
+Processor::Chip8::ex_skip()
+{
+  std::cout << "ex_skip: " << hexdump(this->opCode) << std::endl;
+
+  switch( this->opCode & 0x00FF)
+  {
+
+    case 0x009E:
+      if ( this->key[( this->registers[(this->opCode & 0x0F00) >> 8 ] )] != 0)
+      {
+        this->programCounter += 4;
+      }
+      else
+      {
+        this->programCounter += 2;
+      }
+      break;
+    case 0x00A1:
+      if ( this->key[( this->registers[(this->opCode & 0x0F00) >> 8 ] )] == 0)
+      {
+        this->programCounter += 4;
+      }
+      else
+      {
+        this->programCounter += 2;
+      }
+      break;
+    default:
+      std::cout << "Unimplemented EX OpCode: " << hexdump(this->opCode) << std::endl;
+
+  }
+}
+
+/*
+  8xy0 - LD Vx, Vy
+    Set Vx = Vy.
+    
+    Stores the value of register Vy in register Vx.
+  
+  
+  8xy1 - OR Vx, Vy
+    Set Vx = Vx OR Vy.
+    
+    Performs a bitwise OR on the values of Vx and Vy, then stores the result in Vx. A bitwise OR compares
+    the corrseponding bits from two values, and if either bit is 1, then the same bit in the result 
+    is also 1. Otherwise, it is 0. 
+  
+  
+  8xy2 - AND Vx, Vy
+    Set Vx = Vx AND Vy.
+    
+    Performs a bitwise AND on the values of Vx and Vy, then stores the result in Vx. A bitwise 
+    AND compares the corrseponding bits from two values, 
+    and if both bits are 1, then the same bit in the result is also 1. Otherwise, it is 0. 
+  
+  
+  8xy3 - XOR Vx, Vy
+    Set Vx = Vx XOR Vy.
+    
+    Performs a bitwise exclusive OR on the values of Vx and Vy, then stores the result in Vx. 
+    An exclusive OR compares the corrseponding bits from two values, and if the bits are not both the same, 
+    then the corresponding bit in the result is set to 1. Otherwise, it is 0. 
+  
+  
+  8xy4 - ADD Vx, Vy
+    Set Vx = Vx + Vy, set VF = carry.
+    
+    The values of Vx and Vy are added together. If the result is greater than 8 bits (i.e., > 255,) 
+    VF is set to 1, otherwise 0. Only the lowest 8 bits of the result are kept, and stored in Vx.
+  
+  
+  8xy5 - SUB Vx, Vy
+    Set Vx = Vx - Vy, set VF = NOT borrow.
+    
+    If Vx > Vy, then VF is set to 1, otherwise 0. Then Vy is subtracted from Vx, and the results stored in Vx.
+  
+  
+  8xy6 - SHR Vx {, Vy}
+    Set Vx = Vx SHR 1.
+    
+    If the least-significant bit of Vx is 1, then VF is set to 1, otherwise 0. Then Vx is divided by 2.
+  
+  
+  8xy7 - SUBN Vx, Vy
+    Set Vx = Vy - Vx, set VF = NOT borrow.
+    
+    If Vy > Vx, then VF is set to 1, otherwise 0. Then Vx is subtracted from Vy, and the results stored in Vx.
+  
+  
+  8xyE - SHL Vx {, Vy}
+    Set Vx = Vx SHL 1.
+    
+    If the most-significant bit of Vx is 1, then VF is set to 1, otherwise to 0. Then Vx is multiplied by 2.
+*/
+
+void
+Processor::Chip8::register_vx_vy_byte()
+{
+  std::cout << "register_vx_vy_byte: " << hexdump(this->opCode) << std::endl;
+
+  switch (MASK(0x000F))
+  {
+
+    case 0x0000:
+      this->registers[MASK(0x0F00 >> 8)] = this->registers[MASK(0x00F0) >> 4];
+      this->programCounter += 2;
+      break;
+
+    case 0x0001:
+      this->registers[MASK(0x0F00 >> 8)] |= this->registers[MASK(0x00F0) >> 4];
+      this->programCounter += 2;
+      break;
+
+    case 0x0002:
+      this->registers[MASK(0x0F00 >> 8)] &= this->registers[MASK(0x00F0) >> 4];
+      this->programCounter += 2;
+      break;
+
+    case 0x0003:
+      this->registers[MASK(0x0F00 >> 8)] ^= this->registers[MASK(0x00F0) >> 4];
+      this->programCounter += 2;
+      break;
+
+    case 0x0004:
+      this->registers[MASK(0x0F00) >> 8] += this->registers[MASK(0x00F0) >> 4];
+      this->registers[0xF] = 0;
+      if (this->registers[MASK(0x00F0) >> 4] > (0xFF - this->registers[MASK(0x0F00) >> 8] ))
+      {
+        // carry flag
+        this->registers[0xF] = 1;
+      }
+      this->programCounter += 2;
+      break;
+
+    case 0x0005:
+      this->registers[0xF] = 1; // no borrow
+      if ( this->registers[MASK(0x00F0) >> 4] > this->registers[MASK(0x0F00) >> 8] )
+      {
+        this->registers[0xF] = 0; // there is a borrow
+      }
+      this->registers[MASK(0x0F00) >> 8] -= this->registers[MASK(0x00F0) >> 4];
+      this->programCounter += 2;
+      break;
+
+    case 0x0006:
+      this->registers[0xF] = this->registers[MASK(0x0F00) >> 8] & 0x1;
+      this->registers[MASK(0x0F00) >> 8] >>= 1;
+      this->programCounter += 2;
+      break;
+
+    case 0x0007:
+      this->registers[0xF] = 1; // no borrow
+      if ( this->registers[MASK(0x0F00) >> 8] > this->registers[MASK(0x00F0) >> 4] )
+      {
+        this->registers[0xF] = 0; // borrow
+      }
+      this->registers[MASK(0x0F00) >> 8] = this->registers[MASK(0x00F0) >> 4] - this->registers[MASK(0x0F00) >> 8];
+      this->programCounter += 2;
+      break;
+
+    case 0x000E:
+      this->registers[0xF] = this->registers[MASK(0x0F00) >> 8] >> 7;
+      this->registers[MASK(0x0F00) >> 8] <<= 1;
+      this->programCounter += 2;
+      break;
+
+    default:
+      std::cout << "Unimplemented register_vx_vy_byte OpCode: " << hexdump(this->opCode) << std::endl;
+  }
+
+}
+
+
+
 
 

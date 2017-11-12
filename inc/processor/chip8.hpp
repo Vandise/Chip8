@@ -18,6 +18,8 @@
 #define C8_GFX_LENGTH 64
 #define C8_GFX_WIDTH  32
 
+#define MASK(hex) (this->opCode & hex)
+
 namespace Processor
 {
 	class Chip8
@@ -56,6 +58,8 @@ namespace Processor
     protected:
       void return_clear_screen();
       void fx_entrance();
+      void ex_skip();
+      void register_vx_vy_byte();
       void fx_ld_b_vx();
       void fx_ld_vx_i();
       void fx_ld_f_vx();
@@ -67,7 +71,9 @@ namespace Processor
       void call_addr();
       void add_vx_byte();
       void se_vx_byte();
+      void sne_vx_byte();
       void jp_addr();
+      void rnd_vx_byte();
 
 	};
 }
