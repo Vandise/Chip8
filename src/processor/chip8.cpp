@@ -55,7 +55,7 @@ Processor::Chip8::initialize()
   this->instructions[0x4000] = &Chip8::sne_vx_byte;               // validated
   this->instructions[0x6000] = &Chip8::ld_vx_byte;                // validated
   this->instructions[0x7000] = &Chip8::add_vx_byte;               // validated
-  this->instructions[0x8000] = &Chip8::register_vx_vy_byte;
+  this->instructions[0x8000] = &Chip8::register_vx_vy_byte;       // validated
   this->instructions[0xA000] = &Chip8::ld_i_addr;
   this->instructions[0xC000] = &Chip8::rnd_vx_byte;
   this->instructions[0xD000] = &Chip8::drw_vx_vy_nibble;
@@ -72,8 +72,13 @@ Processor::Chip8::initialize()
 }
 
 void
-Processor::Chip8::dumpMemory()
+Processor::Chip8::debugMemory()
 {
+  // ensure that fonts are in memory at all times
+  for (int i = 0; i < 80; ++i)
+  {
+    this->memory[i] = chip8_fontset[i];
+  }
   std::cout << hexdump(this->memory) << std::endl;
 }
 

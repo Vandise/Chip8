@@ -30,7 +30,6 @@ namespace Processor
     private:
       uint16_t stack[16];         // Stack
       uint16_t sp;                // Stack pointer
-      uint8_t  memory[4096];      // 4k of memory
       uint8_t  registers[16];     // 16 registers: 0 - F
       uint16_t indexRegister;
       uint16_t programCounter;
@@ -46,13 +45,14 @@ namespace Processor
 
     public:
 
-      bool    drawFlag; // tell the view to redraw the screen
-      uint8_t graphicsBuffer[C8_GFX_LENGTH * C8_GFX_WIDTH];
+      bool     drawFlag; // tell the view to redraw the screen
+      uint8_t  graphicsBuffer[C8_GFX_LENGTH * C8_GFX_WIDTH];
+      uint8_t  memory[4096];      // 4k of memory
       uint8_t  key[16]; // Keypad
 
       Chip8(const char *file_path);
       void initialize();
-      void dumpMemory();
+      void debugMemory();
       void cycle();
 
     protected:
