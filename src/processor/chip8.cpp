@@ -48,13 +48,13 @@ Processor::Chip8::initialize()
   }
 
   // Instruction Handlers
-  this->instructions[0x0000] = &Chip8::return_clear_screen;
-  this->instructions[0x1000] = &Chip8::jp_addr;
-  this->instructions[0x2000] = &Chip8::call_addr;
-  this->instructions[0x3000] = &Chip8::se_vx_byte;
-  this->instructions[0x4000] = &Chip8::sne_vx_byte;
-  this->instructions[0x6000] = &Chip8::ld_vx_byte;
-  this->instructions[0x7000] = &Chip8::add_vx_byte;
+  this->instructions[0x0000] = &Chip8::return_clear_screen;       // validated
+  this->instructions[0x1000] = &Chip8::jp_addr;                   // validated
+  this->instructions[0x2000] = &Chip8::call_addr;                 // validated
+  this->instructions[0x3000] = &Chip8::se_vx_byte;                // validated
+  this->instructions[0x4000] = &Chip8::sne_vx_byte;               // validated
+  this->instructions[0x6000] = &Chip8::ld_vx_byte;                // validated
+  this->instructions[0x7000] = &Chip8::add_vx_byte;               // validated
   this->instructions[0x8000] = &Chip8::register_vx_vy_byte;
   this->instructions[0xA000] = &Chip8::ld_i_addr;
   this->instructions[0xC000] = &Chip8::rnd_vx_byte;
@@ -67,7 +67,8 @@ Processor::Chip8::initialize()
     this->fxInstructions[0x0018] = &Chip8::fx_ld_st_vx;
     this->fxInstructions[0x0029] = &Chip8::fx_ld_f_vx;
     this->fxInstructions[0x0033] = &Chip8::fx_ld_b_vx;
-    this->fxInstructions[0x0065] = &Chip8::fx_ld_vx_i;;
+    this->fxInstructions[0x0065] = &Chip8::fx_ld_vx_i;
+    this->fxInstructions[0x001E] = &Chip8::fx_add_i_vx;
 }
 
 void
@@ -120,7 +121,7 @@ Processor::Chip8::cycle()
     if (this->soundTimer == 1)
     {
       // BEEP!
-      std::cout << '\a';
+      std::cout << '\7';
     }
     --this->soundTimer;
   }
@@ -166,7 +167,7 @@ Processor::Chip8::ld_vx_byte()
 {
   std::cout << "ld_vx_byte: " << hexdump(this->opCode) << std::endl;
 
-  this->registers[(this->opCode & 0x0F00) >> 8] = (this->opCode & 0x00FF);
+  this->registers[MASK(0x0F00) >> 8] = MASK(0x00FF);
   this->programCounter += 2;
 }
 
@@ -202,9 +203,9 @@ Processor::Chip8::drw_vx_vy_nibble()
 {
   std::cout << "drw_vx_vy_nibble: " << hexdump(this->opCode) << std::endl;
 
-  unsigned short xCoord = this->registers[(this->opCode & 0x0F00) >> 8];
-  unsigned short yCoord = this->registers[(this->opCode & 0x00F0) >> 4];
-  unsigned short height = this->opCode & 0x000F;
+  unsigned short xCoord = this->registers[MASK(0x0F00) >> 8];
+  unsigned short yCoord = this->registers[MASK(0x00F0) >> 4];
+  unsigned short height = MASK(0x000F);
   unsigned short pixel;
 
   // reset register (V)F to 0 as nothing is erased (yet)
@@ -226,18 +227,19 @@ Processor::Chip8::drw_vx_vy_nibble()
         // if so, we register the collision by setting register (V)F to 1
         //int offset = (xCoord + y + ((yCoord + w) * C8_GFX_LENGTH));
         int offset = (xCoord + xline + ((yCoord + yline) * C8_GFX_LENGTH));
-        if ( this->graphicsBuffer[(xCoord + xline + ((yCoord + yline) * C8_GFX_LENGTH))] == 1 )
+        if ( this->graphicsBuffer[offset] == 1 )
         {
           this->registers[0xF] = 1;
         }
         // XOR the pixel to redraw the screen
-        this->graphicsBuffer[(xCoord + xline + ((yCoord + yline) * C8_GFX_LENGTH))] ^= 1;
+        this->graphicsBuffer[offset] ^= 1;
       }
     }
   }
   // redraw the screen
   this->drawFlag = true;
   this->programCounter += 2;
+
 }
 
 /*
@@ -277,7 +279,7 @@ Processor::Chip8::call_addr()
 void
 Processor::Chip8::se_vx_byte()
 {
-  if ( this->registers[(this->opCode & 0x0F00) >> 8] == (this->opCode & 0x00FF) )
+  if ( this->registers[MASK(0x0F00) >> 8] == MASK(0x00FF) )
   {
     this->programCounter += 4;
   }
@@ -297,7 +299,7 @@ Processor::Chip8::se_vx_byte()
 void
 Processor::Chip8::sne_vx_byte()
 {
-  if ( this->registers[(this->opCode & 0x0F00) >> 8] != (this->opCode & 0x00FF) )
+  if ( this->registers[MASK(0x0F00) >> 8] != MASK(0x00FF) )
   {
     this->programCounter += 4;
   }
@@ -399,11 +401,11 @@ Processor::Chip8::fx_ld_vx_i()
 {
   std::cout << "fx_ld_vx_i: " << hexdump(this->opCode) << std::endl;
 
-  for (int i = 0; i <= ((this->opCode & 0x0F00) >> 8); ++i)
+  for (int i = 0; i <= (MASK(0x0F00) >> 8); ++i)
   {
     this->registers[i] = this->memory[this->indexRegister + i];
   }
-  this->indexRegister += ((this->opCode & 0x0F00) >> 8) + 1;
+  this->indexRegister += (MASK(0x0F00) >> 8) + 1;
   this->programCounter += 2;
 }
 
@@ -423,6 +425,27 @@ Processor::Chip8::fx_ld_f_vx()
 }
 
 /*
+  Fx1E - ADD I, Vx
+    Set I = I + Vx.
+
+    The values of I and Vx are added, and the results are stored in I.
+*/
+void
+Processor::Chip8::fx_add_i_vx()
+{
+  std::cout << "fx_add_i_vx: " << hexdump(this->opCode) << std::endl;
+  // VF is set to 1 when range overflow (I+VX>0xFFF), and 0
+  this->registers[0xF] = 0;
+  if ( (this->indexRegister + this->registers[MASK(0x0F00) >> 8]) > 0xFFF )
+  {
+    this->registers[0xF] = 1;
+  }
+  this->indexRegister += this->registers[MASK(0x0F00) >> 8];
+  this->programCounter += 2;
+}
+
+
+/*
   7xkk - ADD Vx, byte
     Set Vx = Vx + kk.
     Adds the value kk to the value of register Vx, then stores the result in Vx. 
@@ -432,7 +455,7 @@ Processor::Chip8::add_vx_byte()
 {
   std::cout << "add_vx_byte: " << hexdump(this->opCode) << std::endl;
 
-  this->registers[(this->opCode & 0x0F00) >> 8] += (this->opCode & 0x00FF);
+  this->registers[MASK(0x0F00) >> 8] += MASK(0x00FF);
   this->programCounter += 2;
 }
 
@@ -475,7 +498,7 @@ Processor::Chip8::ex_skip()
   {
 
     case 0x009E:
-      if ( this->key[( this->registers[(this->opCode & 0x0F00) >> 8 ] )] != 0)
+      if ( this->key[( this->registers[MASK(0x0F00) >> 8 ] )] != 0)
       {
         this->programCounter += 4;
       }
@@ -485,7 +508,7 @@ Processor::Chip8::ex_skip()
       }
       break;
     case 0x00A1:
-      if ( this->key[( this->registers[(this->opCode & 0x0F00) >> 8 ] )] == 0)
+      if ( this->key[ (this->registers[MASK(0x0F00) >> 8 ]) ] == 0)
       {
         this->programCounter += 4;
       }
@@ -496,6 +519,7 @@ Processor::Chip8::ex_skip()
       break;
     default:
       std::cout << "Unimplemented EX OpCode: " << hexdump(this->opCode) << std::endl;
+      exit(1);
 
   }
 }
@@ -571,22 +595,22 @@ Processor::Chip8::register_vx_vy_byte()
   {
 
     case 0x0000:
-      this->registers[MASK(0x0F00 >> 8)] = this->registers[MASK(0x00F0) >> 4];
+      this->registers[MASK(0x0F00) >> 8] = this->registers[MASK(0x00F0) >> 4];
       this->programCounter += 2;
       break;
 
     case 0x0001:
-      this->registers[MASK(0x0F00 >> 8)] |= this->registers[MASK(0x00F0) >> 4];
+      this->registers[MASK(0x0F00) >> 8] |= this->registers[MASK(0x00F0) >> 4];
       this->programCounter += 2;
       break;
 
     case 0x0002:
-      this->registers[MASK(0x0F00 >> 8)] &= this->registers[MASK(0x00F0) >> 4];
+      this->registers[MASK(0x0F00) >> 8] &= this->registers[MASK(0x00F0) >> 4];
       this->programCounter += 2;
       break;
 
     case 0x0003:
-      this->registers[MASK(0x0F00 >> 8)] ^= this->registers[MASK(0x00F0) >> 4];
+      this->registers[MASK(0x0F00) >> 8] ^= this->registers[MASK(0x00F0) >> 4];
       this->programCounter += 2;
       break;
 
@@ -635,6 +659,7 @@ Processor::Chip8::register_vx_vy_byte()
 
     default:
       std::cout << "Unimplemented register_vx_vy_byte OpCode: " << hexdump(this->opCode) << std::endl;
+      exit(1);
   }
 
 }

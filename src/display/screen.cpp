@@ -1,7 +1,32 @@
 #include "display/screen.hpp"
 
+uint8_t keymap[16] = {
+    SDLK_x,
+    SDLK_1,
+    SDLK_2,
+    SDLK_3,
+    SDLK_q,
+    SDLK_w,
+    SDLK_e,
+    SDLK_a,
+    SDLK_s,
+    SDLK_d,
+    SDLK_z,
+    SDLK_c,
+    SDLK_4,
+    SDLK_r,
+    SDLK_f,
+    SDLK_v,
+};
+
 Display::Screen::Screen()
 {
+
+  if ( SDL_Init(SDL_INIT_EVERYTHING) < 0 ) {
+    printf( "SDL could not initialize! SDL_Error: %s\n", SDL_GetError() );
+    exit(1);
+  }
+
   this->window = SDL_CreateWindow(
     "CHIP-8",
     SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
@@ -26,6 +51,15 @@ Display::Screen::Screen()
 Display::Screen::~Screen()
 {
   SDL_Quit();
+}
+
+void
+Display::Screen::clearPixelBuffer()
+{
+  for ( int i = 0; i < 2048; ++i)
+  {
+    this->pixelBuffer[i] = 0;
+  }
 }
 
 void

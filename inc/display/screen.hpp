@@ -24,6 +24,7 @@ namespace Display
     public:
       Screen();
       ~Screen();
+      void clearPixelBuffer();
       void pushToBuffer(int index, uint32_t pixel);
       void refresh();
       void inputManager();

@@ -18,7 +18,7 @@
 #define C8_GFX_LENGTH 64
 #define C8_GFX_WIDTH  32
 
-#define MASK(hex) (this->opCode & hex)
+#define MASK(hex) ((this->opCode & hex))
 
 namespace Processor
 {
@@ -66,6 +66,7 @@ namespace Processor
       void fx_ld_dt_vx();
       void fx_ld_vx_dt();
       void fx_ld_st_vx();
+      void fx_add_i_vx();
       void ld_vx_byte();
       void ld_i_addr();
       void drw_vx_vy_nibble();

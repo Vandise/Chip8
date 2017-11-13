@@ -33,14 +33,16 @@ main( const int argc, const char **argv )
     if (C8->drawFlag)
     {
       C8->drawFlag = false;
+      //window->clearPixelBuffer();
       for ( int i = 0; i < 2048; ++i)
       {
         uint8_t pixel = C8->graphicsBuffer[i];
         window->pushToBuffer(i, ((0x00FFFFFF * pixel) | 0xFF000000));
       }
+
       window->refresh();
+      std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
-    std::this_thread::sleep_for(std::chrono::microseconds(800));
 
   }
   delete(C8);
